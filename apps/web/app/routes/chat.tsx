@@ -18,12 +18,7 @@ import { Input } from "@workspace/ui/components/input";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { ArrowLeft, Bot, Send, Trash2, User } from "lucide-react";
 
-import {
-  type ChatMessage,
-  clearChatHistory,
-  fetchChatHistory,
-  sendMessage,
-} from "../lib/api";
+import { type ChatMessage, useApi } from "../lib/api";
 
 // Loader function to get session ID
 export function loader() {
@@ -40,6 +35,7 @@ export default function Chat() {
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const api = useApi();
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -49,13 +45,13 @@ export default function Chat() {
   // Fetch chat history using TanStack Query
   const { data: messages = [], isLoading: isLoadingHistory } = useQuery({
     queryKey: ["chatHistory", sessionId],
-    queryFn: () => fetchChatHistory(sessionId),
+    queryFn: () => api.fetchChatHistory(sessionId),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: (message: ChatMessage) => sendMessage(message, sessionId),
+    mutationFn: (message: ChatMessage) => api.sendMessage(message, sessionId),
     onSuccess: (_data: ChatMessage) => {
       // Invalidate and refetch chat history
       queryClient.invalidateQueries({ queryKey: ["chatHistory", sessionId] });
@@ -70,7 +66,7 @@ export default function Chat() {
 
   // Clear chat mutation
   const clearChatMutation = useMutation({
-    mutationFn: () => clearChatHistory(sessionId),
+    mutationFn: () => api.clearChatHistory(sessionId),
     onSuccess: () => {
       // Invalidate and refetch chat history
       queryClient.invalidateQueries({ queryKey: ["chatHistory", sessionId] });
@@ -91,10 +87,18 @@ export default function Chat() {
       content: input.trim(),
     };
 
-    // Add user message to the chat
+    // Add user message to the chat immediately
     setInput("");
     setIsLoading(true);
     setError(null);
+
+    // Optimistically update the UI with the user's message
+    queryClient.setQueryData(
+      ["chatHistory", sessionId],
+      (oldData: ChatMessage[] = []) => {
+        return [...oldData, userMessage];
+      },
+    );
 
     try {
       // Send message using mutation
