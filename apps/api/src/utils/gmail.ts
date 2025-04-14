@@ -40,7 +40,13 @@ export class GmailService {
     });
   }
 
-  async getGmailMessages({ accessToken }: { accessToken: string }) {
+  async getGmailMessages({
+    accessToken,
+    query,
+  }: {
+    accessToken: string;
+    query: string;
+  }) {
     try {
       // fetch subject of most recent email
       const gmailClient = await this.getGmailClient({
@@ -49,10 +55,8 @@ export class GmailService {
 
       const response = await gmailClient.users.messages.list({
         userId: "me",
-        q: "from:me",
+        q: query,
       });
-
-      console.log(response);
 
       const messages = response.data.messages;
       if (!messages || messages.length === 0) {
