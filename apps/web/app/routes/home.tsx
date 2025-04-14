@@ -24,7 +24,7 @@ export const meta: MetaFunction = () => {
 };
 
 export async function loader({
-  request,
+  request: _request,
 }: LoaderFunctionArgs): Promise<LoaderData> {
   // Simulate API call
   const data = await new Promise<LoaderData>((resolve) =>
@@ -52,7 +52,7 @@ export default function Home() {
 
   return (
     <div className="p-4">
-      <Button>Click me</Button>
+      <Button>{data.message}</Button>
     </div>
   );
 }

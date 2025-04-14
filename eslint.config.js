@@ -43,7 +43,7 @@ export default [
       ],
       "@typescript-eslint/no-unused-vars": [
         "warn",
-        { argsIgnorePattern: "^_" },
+        { argsIgnorePattern: "^_.*" },
       ],
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/explicit-module-boundary-types": "off",
