@@ -110,9 +110,30 @@ export function useApi() {
     }
   };
 
+  // Get Gmail messages
+  const getGmailMessages = async (): Promise<string> => {
+    try {
+      const apiUrl = `${API_URL}/api/gmail/messages`;
+      const headers = await getHeaders();
+      const response = await fetch(apiUrl, { headers });
+
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.subject || "No subject found";
+    } catch (error) {
+      console.error("Failed to get Gmail messages:", error);
+      throw error;
+    }
+  };
+
   return {
     fetchChatHistory,
     sendMessage,
     clearChatHistory,
+    getHeaders,
+    getGmailMessages,
   };
 }

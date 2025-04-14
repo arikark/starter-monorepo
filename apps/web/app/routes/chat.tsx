@@ -18,6 +18,7 @@ import { Input } from "@workspace/ui/components/input";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { ArrowLeft, Bot, Send, Trash2, User } from "lucide-react";
 
+import { GmailForm } from "../components/GmailForm";
 import { type ChatMessage, useApi } from "../lib/api";
 
 // Loader function to get session ID
@@ -118,139 +119,151 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-4xl mx-auto p-4 gap-10">
-      <Card className="flex flex-col h-full">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-2xl font-bold">Chat Interface</CardTitle>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleClearChat}
-              title="Clear Chat"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => navigate("/")}
-              title="Back to Home"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
+    <div className="container mx-auto p-4 max-w-4xl">
+      <Card className="p-6">
+        <div className="flex flex-col gap-4">
+          <h1 className="text-2xl font-bold">Chat</h1>
 
-        {error && (
-          <div className="mx-4 mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-md">
-            <p className="font-medium">Error:</p>
-            <p className="text-sm">{error}</p>
-          </div>
-        )}
+          <GmailForm />
 
-        <CardContent className="flex-1 p-0">
-          <ScrollArea className="h-[calc(100vh-220px)] p-4">
-            <div className="flex flex-col gap-4">
-              {messages.length === 0 && !isLoading && !isLoadingHistory && (
-                <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-                  <Bot className="h-12 w-12 mb-4 opacity-50" />
-                  <p className="text-lg font-medium">No messages yet</p>
-                  <p className="text-sm">
-                    Start a conversation by typing a message below
-                  </p>
-                </div>
-              )}
-
-              {messages.map((message: ChatMessage, index: number) => (
-                <div
-                  key={index}
-                  className={`flex items-start gap-3 ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
+          <Card className="flex flex-col h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-2xl font-bold">
+                Chat Interface
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleClearChat}
+                  title="Clear Chat"
                 >
-                  {message.role === "assistant" && (
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="/bot-avatar.svg" alt="Assistant" />
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        <Bot className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => navigate("/")}
+                  title="Back to Home"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
 
-                  <div
-                    className={`max-w-[70%] p-3 rounded-lg ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground ml-auto"
-                        : "bg-muted"
-                    }`}
-                  >
-                    {message.content}
-                  </div>
+            {error && (
+              <div className="mx-4 mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-md">
+                <p className="font-medium">Error:</p>
+                <p className="text-sm">{error}</p>
+              </div>
+            )}
 
-                  {message.role === "user" && (
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="/user-avatar.svg" alt="User" />
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        <User className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
-              ))}
-
-              {(isLoading || isLoadingHistory) && (
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="/bot-avatar.svg" alt="Assistant" />
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      <Bot className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="bg-muted p-3 rounded-lg">
-                    <div className="flex gap-1">
-                      <div
-                        className="w-2 h-2 bg-primary/50 rounded-full animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-primary/50 rounded-full animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-primary/50 rounded-full animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      ></div>
+            <CardContent className="flex-1 p-0">
+              <ScrollArea className="h-[calc(100vh-220px)] p-4">
+                <div className="flex flex-col gap-4">
+                  {messages.length === 0 && !isLoading && !isLoadingHistory && (
+                    <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+                      <Bot className="h-12 w-12 mb-4 opacity-50" />
+                      <p className="text-lg font-medium">No messages yet</p>
+                      <p className="text-sm">
+                        Start a conversation by typing a message below
+                      </p>
                     </div>
-                  </div>
+                  )}
+
+                  {messages.map((message: ChatMessage, index: number) => (
+                    <div
+                      key={index}
+                      className={`flex items-start gap-3 ${
+                        message.role === "user"
+                          ? "justify-end"
+                          : "justify-start"
+                      }`}
+                    >
+                      {message.role === "assistant" && (
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src="/bot-avatar.svg" alt="Assistant" />
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            <Bot className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+
+                      <div
+                        className={`max-w-[70%] p-3 rounded-lg ${
+                          message.role === "user"
+                            ? "bg-primary text-primary-foreground ml-auto"
+                            : "bg-muted"
+                        }`}
+                      >
+                        {message.content}
+                      </div>
+
+                      {message.role === "user" && (
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src="/user-avatar.svg" alt="User" />
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            <User className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
+                  ))}
+
+                  {(isLoading || isLoadingHistory) && (
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src="/bot-avatar.svg" alt="Assistant" />
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          <Bot className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="bg-muted p-3 rounded-lg">
+                        <div className="flex gap-1">
+                          <div
+                            className="w-2 h-2 bg-primary/50 rounded-full animate-bounce"
+                            style={{ animationDelay: "0ms" }}
+                          ></div>
+                          <div
+                            className="w-2 h-2 bg-primary/50 rounded-full animate-bounce"
+                            style={{ animationDelay: "150ms" }}
+                          ></div>
+                          <div
+                            className="w-2 h-2 bg-primary/50 rounded-full animate-bounce"
+                            style={{ animationDelay: "300ms" }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
                 </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
-        </CardContent>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+          <div className="flex w-full gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              placeholder="Type your message..."
+              className="flex-1"
+            />
+            <Button
+              onClick={handleSendMessage}
+              disabled={isLoading || !input.trim()}
+              size="icon"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </Card>
-      <div className="flex w-full gap-2">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSendMessage();
-            }
-          }}
-          placeholder="Type your message..."
-          className="flex-1"
-        />
-        <Button
-          onClick={handleSendMessage}
-          disabled={isLoading || !input.trim()}
-          size="icon"
-        >
-          <Send className="h-4 w-4" />
-        </Button>
-      </div>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { cors } from "hono/cors";
 import OpenAI from "openai";
 
 import { ChatService } from "./utils/chat";
+import { GmailService } from "./utils/gmail";
 
 dotenv.config();
 
@@ -118,6 +119,40 @@ app.delete("/api/chat/:sessionId", verifyAuth, async (c) => {
   } catch (error) {
     console.error("Error clearing chat history:", error);
     return c.json({ error: "Failed to clear chat history" }, 500);
+  }
+});
+
+// Get Gmail messages endpoint
+app.get("/api/gmail/messages", verifyAuth, async (c) => {
+  try {
+    const userId = c.get("userId");
+    // this returns an array of OauthAccessToken objects I'm just getting the first one
+    const {
+      data: [OauthAccessToken],
+    } = await clerk.users.getUserOauthAccessToken(userId || "", "google");
+
+    console.log(OauthAccessToken);
+
+    if (!OauthAccessToken) {
+      return c.json({ error: "No access token found" }, 401);
+    }
+
+    const gmailService = new GmailService({
+      access_token: OauthAccessToken?.token,
+      refresh_token: OauthAccessToken?.refreshToken,
+    });
+
+    const messages = await gmailService.getGmailMessages({
+      accessToken: OauthAccessToken?.token,
+      refreshToken: OauthAccessToken?.refreshToken,
+    });
+
+    console.log(messages);
+
+    return c.json({ messages });
+  } catch (error) {
+    console.error("Error fetching Gmail messages:", error);
+    return c.json({ error: "Failed to fetch Gmail messages" }, 500);
   }
 });
 
