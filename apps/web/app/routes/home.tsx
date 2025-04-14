@@ -2,6 +2,7 @@ import {
   type LoaderFunctionArgs,
   type RouteObject,
   useLoaderData,
+  Link,
 } from "react-router-dom";
 import type { MetaFunction } from "@remix-run/react";
 import { Button } from "@workspace/ui/components/button";
@@ -51,8 +52,13 @@ export default function Home() {
   const data = useLoaderData<typeof loader>();
 
   return (
-    <div className="p-4">
-      <Button>{data.message}</Button>
+    <div className="p-4 flex flex-col items-center justify-center min-h-screen">
+      <h1 className="text-3xl font-bold mb-6">{data.message}</h1>
+      <div className="flex gap-4">
+        <Button asChild>
+          <Link to="/chat">Go to Chat</Link>
+        </Button>
+      </div>
     </div>
   );
 }

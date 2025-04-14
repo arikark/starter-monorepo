@@ -41,7 +41,7 @@ export class ChatService {
       max_tokens: 1000,
     });
 
-    const assistantResponse = completion.choices[0].message;
+    const assistantResponse = completion.choices[0]?.message;
 
     // Update chat history with new messages and response
     const updatedHistory = [...allMessages, assistantResponse] as ChatMessage[];
@@ -49,7 +49,7 @@ export class ChatService {
 
     return {
       role: "assistant",
-      content: assistantResponse.content || "No response generated",
+      content: assistantResponse?.content || "No response generated",
       sessionId: currentSessionId,
     };
   }
@@ -58,10 +58,8 @@ export class ChatService {
     const chatHistory = await this.redis.get<ChatMessage[]>(
       `chat:${sessionId}`,
     );
-    if (!chatHistory) {
-      throw new Error("Chat history not found");
-    }
-    return chatHistory;
+    // Return an empty array if chat history is not found
+    return chatHistory || [];
   }
 
   async clearChatHistory(sessionId: string): Promise<void> {

@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import "@workspace/ui/globals.css";
 import Home, { action, ErrorBoundary, loader, type Route } from "./routes/home";
+import Chat from "./routes/chat";
 
 const routes = [
   {
@@ -13,6 +14,10 @@ const routes = [
     action,
     errorElement: <ErrorBoundary />,
   } satisfies Route,
+  {
+    path: "/chat",
+    element: <Chat />,
+  },
 ];
 
 const router = createBrowserRouter(routes);
