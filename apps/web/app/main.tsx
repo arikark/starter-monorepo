@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-import "@workspace/ui/globals.css"
+import "@workspace/ui/globals.css";
 import Home, { action, ErrorBoundary, loader, type Route } from "./routes/home";
 
 const routes = [

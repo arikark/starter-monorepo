@@ -4,7 +4,7 @@ import {
   useLoaderData,
 } from "react-router-dom";
 import type { MetaFunction } from "@remix-run/react";
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@workspace/ui/components/button";
 
 export type Route = RouteObject & {
   path: "/";
@@ -53,7 +53,6 @@ export default function Home() {
   return (
     <div className="p-4">
       <Button>Click me</Button>
-
     </div>
   );
 }
