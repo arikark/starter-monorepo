@@ -42,8 +42,19 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_TOKEN,
 });
 
-// Initialize ChatService
-const chatService = new ChatService(openai, redis);
+const getGmailService = async (userId: string) => {
+  const {
+    data: [OauthAccessToken],
+  } = await clerk.users.getUserOauthAccessToken(userId || "", "google");
+
+  if (!OauthAccessToken?.token) {
+    throw new Error("No access token found");
+  }
+
+  return new GmailService({
+    accessToken: OauthAccessToken.token,
+  });
+};
 
 // Auth middleware
 const verifyAuth = async (
@@ -88,6 +99,8 @@ app.post("/api/chat", verifyAuth, async (c) => {
       return c.json({ error: "Invalid request format" }, 400);
     }
 
+    const gmailService = await getGmailService(userId);
+    const chatService = new ChatService(openai, redis, gmailService);
     const response = await chatService.sendMessage(messages, sessionId, userId);
     return c.json(response);
   } catch (error) {
@@ -101,6 +114,8 @@ app.get("/api/chat/:sessionId", verifyAuth, async (c) => {
   try {
     const sessionId = c.req.param("sessionId");
     const userId = c.get("userId");
+    const gmailService = await getGmailService(userId);
+    const chatService = new ChatService(openai, redis, gmailService);
     const history = await chatService.getChatHistory(sessionId, userId);
     return c.json({ history });
   } catch (error) {
@@ -114,6 +129,8 @@ app.delete("/api/chat/:sessionId", verifyAuth, async (c) => {
   try {
     const sessionId = c.req.param("sessionId");
     const userId = c.get("userId");
+    const gmailService = await getGmailService(userId);
+    const chatService = new ChatService(openai, redis, gmailService);
     await chatService.clearChatHistory(sessionId, userId);
     return c.json({ success: true });
   } catch (error) {

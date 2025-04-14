@@ -7,6 +7,10 @@ export class GmailService {
     this.accessToken = accessToken;
   }
 
+  getAccessToken(): string {
+    return this.accessToken;
+  }
+
   private async getGoogleClient({
     accessToken,
     scopes,
@@ -45,7 +49,7 @@ export class GmailService {
     query,
   }: {
     accessToken: string;
-    query: string;
+    query?: string;
   }) {
     try {
       // fetch subject of most recent email
@@ -75,7 +79,6 @@ export class GmailService {
 
       // Extract subject from headers
       const headers = messageDetails.data.payload?.headers || [];
-      console.log(headers);
       let subject = "No subject";
 
       // Find subject header
