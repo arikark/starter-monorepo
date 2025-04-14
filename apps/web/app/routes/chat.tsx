@@ -56,7 +56,7 @@ export default function Chat() {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: (message: ChatMessage) => sendMessage(message, sessionId),
-    onSuccess: (data: ChatMessage) => {
+    onSuccess: (_data: ChatMessage) => {
       // Invalidate and refetch chat history
       queryClient.invalidateQueries({ queryKey: ["chatHistory", sessionId] });
     },

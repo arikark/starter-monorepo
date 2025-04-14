@@ -1,8 +1,8 @@
 import {
+  Link,
   type LoaderFunctionArgs,
   type RouteObject,
   useLoaderData,
-  Link,
 } from "react-router-dom";
 import type { MetaFunction } from "@remix-run/react";
 import { Button } from "@workspace/ui/components/button";

@@ -6,12 +6,15 @@ export interface ChatMessage {
   content: string;
 }
 
+// Get the API URL from environment variables
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
 // Fetch chat history for a session
 export async function fetchChatHistory(
   sessionId: string,
 ): Promise<ChatMessage[]> {
   try {
-    const apiUrl = `http://localhost:3001/api/chat/${sessionId}`;
+    const apiUrl = `${API_URL}/api/chat/${sessionId}`;
     const response = await fetch(apiUrl);
 
     if (!response.ok) {
@@ -37,7 +40,7 @@ export async function sendMessage(
   sessionId: string,
 ): Promise<ChatMessage> {
   try {
-    const apiUrl = "http://localhost:3001/api/chat";
+    const apiUrl = `${API_URL}/api/chat`;
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
@@ -72,7 +75,7 @@ export async function sendMessage(
 // Clear chat history for a session
 export async function clearChatHistory(sessionId: string): Promise<void> {
   try {
-    const apiUrl = `http://localhost:3001/api/chat/${sessionId}`;
+    const apiUrl = `${API_URL}/api/chat/${sessionId}`;
     const response = await fetch(apiUrl, {
       method: "DELETE",
     });
