@@ -1,27 +1,17 @@
 import { google } from "googleapis";
 
 export class GmailService {
-  private access_token: string;
-  private refresh_token: string;
+  private accessToken: string;
 
-  constructor({
-    access_token,
-    refresh_token,
-  }: {
-    access_token: string;
-    refresh_token: string;
-  }) {
-    this.access_token = access_token;
-    this.refresh_token = refresh_token;
+  constructor({ accessToken }: { accessToken: string }) {
+    this.accessToken = accessToken;
   }
 
   private async getGoogleClient({
     accessToken,
-    refreshToken,
     scopes,
   }: {
     accessToken: string;
-    refreshToken: string;
     scopes: string[];
   }) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -34,22 +24,14 @@ export class GmailService {
     googleAuth.setCredentials({
       scope: scopes.join(" "),
       access_token: accessToken,
-      refresh_token: refreshToken,
     });
 
     return googleAuth;
   }
 
-  private async getGmailClient({
-    accessToken,
-    refreshToken,
-  }: {
-    accessToken: string;
-    refreshToken: string;
-  }) {
+  private async getGmailClient({ accessToken }: { accessToken: string }) {
     const googleAuth = await this.getGoogleClient({
       accessToken,
-      refreshToken,
       scopes: ["https://www.googleapis.com/auth/gmail.readonly"],
     });
     return google.gmail({
@@ -58,18 +40,11 @@ export class GmailService {
     });
   }
 
-  async getGmailMessages({
-    accessToken,
-    refreshToken,
-  }: {
-    accessToken: string;
-    refreshToken: string;
-  }) {
+  async getGmailMessages({ accessToken }: { accessToken: string }) {
     try {
       // fetch subject of most recent email
       const gmailClient = await this.getGmailClient({
         accessToken,
-        refreshToken,
       });
 
       const response = await gmailClient.users.messages.list({
@@ -96,6 +71,7 @@ export class GmailService {
 
       // Extract subject from headers
       const headers = messageDetails.data.payload?.headers || [];
+      console.log(headers);
       let subject = "No subject";
 
       // Find subject header

@@ -138,13 +138,11 @@ app.get("/api/gmail/messages", verifyAuth, async (c) => {
     }
 
     const gmailService = new GmailService({
-      access_token: OauthAccessToken?.token,
-      refresh_token: OauthAccessToken?.refreshToken,
+      accessToken: OauthAccessToken?.token,
     });
 
     const messages = await gmailService.getGmailMessages({
       accessToken: OauthAccessToken?.token,
-      refreshToken: OauthAccessToken?.refreshToken,
     });
 
     console.log(messages);
