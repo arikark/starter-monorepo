@@ -32,7 +32,9 @@ export class GmailService {
         version: "v1",
         auth: googleAuth,
       });
+      console.log(query);
       const response = await gmailClient.users.messages.list({
+        maxResults: 10,
         userId: "me",
         q: query,
       });
@@ -41,9 +43,19 @@ export class GmailService {
       if (!messages || messages.length === 0) {
         return "No messages found";
       }
-      const messageSnippets = messages?.map(({ id, snippet }) => ({
-        id,
-        snippet,
+      const messageDetails = [];
+      for (const message of messages) {
+        if (!message.id) continue;
+        const messageDetail = await gmailClient.users.messages.get({
+          id: message.id,
+          userId: "me",
+        });
+        messageDetails.push(messageDetail);
+      }
+
+      const messageSnippets = messageDetails?.map(({ data }) => ({
+        id: data?.id,
+        snippet: data?.snippet,
       }));
       return messageSnippets;
     } catch (error) {

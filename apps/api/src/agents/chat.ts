@@ -38,13 +38,15 @@ export class ChatService {
 
     const model = openai("gpt-4o-mini");
     const result = streamText({
+      system:
+        "You are a helpful assistant that can search the user's Gmail inbox for relevant information. You must ask the user for specifics before searching, such as the date range, the subject of the email, or the exact email address of the sender.",
       model,
       messages: allMessagesToDate,
       temperature: 0.1,
       tools: {
         searchGmail: tool({
           description:
-            "Initial search of user's Gmail inbox to extract message snippets. The user is only interested in the snippet of the email.",
+            "Initial search of user's Gmail inbox to extract message snippets.",
           parameters: z.object({
             query: z.string(),
           }),
