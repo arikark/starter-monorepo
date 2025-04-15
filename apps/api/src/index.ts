@@ -15,15 +15,20 @@ if (!process.env.CLERK_SECRET_KEY) {
   throw new Error("CLERK_SECRET_KEY is required");
 }
 
+if (!process.env.CLERK_PUBLISHABLE_KEY) {
+  throw new Error("CLERK_PUBLISHABLE_KEY is required");
+}
+
 // Initialize Clerk client with secret key
 export const clerk = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY,
+  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
 });
 
 // Define our custom context type
 type AppContext = {
   Variables: {
-    userId: string;
+    token: string;
   };
 };
 
@@ -46,26 +51,16 @@ const verifyAuth = async (
   c: Context<AppContext>,
   next: () => Promise<void>,
 ) => {
-  const authHeader = c.req.header("Authorization");
-
-  if (!authHeader) {
-    return c.json({ error: "Unauthorized: Missing token" }, 401);
-  }
-
   try {
     // Extract token from Authorization header
-    const token = authHeader.replace("Bearer ", "");
+    const { isSignedIn, token } = await clerk.authenticateRequest(c.req.raw);
 
-    // Verify the JWT token with Clerk
-    const decodedToken = await verifyToken(token, {
-      secretKey: process.env.CLERK_SECRET_KEY,
-    });
-    if (!decodedToken?.sub) {
-      return c.json({ error: "Unauthorized: Invalid token" }, 401);
+    if (!isSignedIn) {
+      return c.json({ error: "Unauthorized: Missing token" }, 401);
     }
 
-    // Set the verified user ID in the context
-    c.set("userId", decodedToken.sub);
+    // Set the verified token in the context
+    c.set("token", token);
 
     await next();
   } catch (error) {
@@ -77,14 +72,14 @@ const verifyAuth = async (
 // Chat endpoint
 app.post("/api/chat", verifyAuth, async (c) => {
   try {
-    const { message, sessionId } = await c.req.json();
-    const userId = c.get("userId");
+    const { message, id } = await c.req.json();
+    const token = c.get("token");
 
     if (!message) {
       return c.json({ error: "Invalid request format" }, 400);
     }
 
-    const result = await chatService.sendMessage(message, sessionId, userId);
+    const result = await chatService.sendMessage(message, id, token);
     // Mark the response as a v1 data stream:
     c.header("X-Vercel-AI-Data-Stream", "v1");
     c.header("Content-Type", "text/plain; charset=utf-8");
