@@ -1,4 +1,5 @@
 import { createClerkClient, verifyToken } from "@clerk/backend";
+import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { serve } from "@hono/node-server";
 import { Redis } from "@upstash/redis";
 import dotenv from "dotenv";
@@ -46,6 +47,8 @@ const redis = new Redis({
 // Initialize chat service
 const chatService = new ChatService(redis);
 
+app.use("/*", clerkMiddleware());
+
 // Auth middleware
 const verifyAuth = async (
   c: Context<AppContext>,
@@ -53,11 +56,7 @@ const verifyAuth = async (
 ) => {
   try {
     // Extract token from Authorization header
-    const { isSignedIn, token, ...rest } = await clerk.authenticateRequest(
-      c.req.raw,
-    );
-
-    console.log("rest", rest);
+    const { isSignedIn, token } = await clerk.authenticateRequest(c.req.raw);
 
     if (!isSignedIn) {
       return c.json({ error: "Unauthorized: Missing token" }, 401);
@@ -77,13 +76,14 @@ const verifyAuth = async (
 app.post("/api/chat", verifyAuth, async (c) => {
   try {
     const { message, id } = await c.req.json();
-    const token = c.get("token");
+    const auth = getAuth(c);
+    const userId = auth?.userId;
 
-    if (!message) {
+    if (!message || !userId) {
       return c.json({ error: "Invalid request format" }, 400);
     }
 
-    const result = await chatService.sendMessage(message, id, token);
+    const result = await chatService.sendMessage(message, id, userId);
     // Mark the response as a v1 data stream:
     c.header("X-Vercel-AI-Data-Stream", "v1");
     c.header("Content-Type", "text/plain; charset=utf-8");

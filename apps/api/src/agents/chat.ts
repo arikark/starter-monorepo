@@ -51,9 +51,6 @@ export class ChatService {
       },
       maxSteps: 10,
       onFinish: async ({ response }) => {
-        console.log(`Injecting response to chat history to ${chatKey}`);
-        console.log("chatHistory", chatHistory);
-        console.log("response", response);
         // const messages = appendResponseMessages({
         //   messages: chatHistory,
         //   responseMessages: response.messages,

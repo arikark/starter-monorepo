@@ -18,6 +18,7 @@ export class GmailService {
       scope: scopes.join(" "),
       access_token: this.accessToken,
     });
+    console.log("googleAuth", await googleAuth.getTokenInfo(this.accessToken));
     return googleAuth;
   }
 
