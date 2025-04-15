@@ -74,18 +74,4 @@ export class ChatService {
 
     return result;
   }
-
-  async getChatHistory(
-    sessionId: string,
-    userId: string,
-  ): Promise<EnrichedMessage[]> {
-    const chatKey = this.getChatKey(userId, sessionId);
-    const chatHistory = await this.redis.get<EnrichedMessage[]>(chatKey);
-    return chatHistory || [];
-  }
-
-  async clearChatHistory(sessionId: string, userId: string): Promise<void> {
-    const chatKey = this.getChatKey(userId, sessionId);
-    await this.redis.del(chatKey);
-  }
 }

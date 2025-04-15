@@ -96,32 +96,6 @@ app.post("/api/chat", verifyAuth, async (c) => {
   }
 });
 
-// Get chat history endpoint
-app.get("/api/chat/:sessionId", verifyAuth, async (c) => {
-  try {
-    const sessionId = c.req.param("sessionId");
-    const userId = c.get("userId");
-    const history = await chatService.getChatHistory(sessionId, userId);
-    return c.json({ history });
-  } catch (error) {
-    console.error("Error fetching chat history:", error);
-    return c.json({ error: "Failed to fetch chat history" }, 500);
-  }
-});
-
-// Clear chat history endpoint
-app.delete("/api/chat/:sessionId", verifyAuth, async (c) => {
-  try {
-    const sessionId = c.req.param("sessionId");
-    const userId = c.get("userId");
-    await chatService.clearChatHistory(sessionId, userId);
-    return c.json({ success: true });
-  } catch (error) {
-    console.error("Error clearing chat history:", error);
-    return c.json({ error: "Failed to clear chat history" }, 500);
-  }
-});
-
 // Health check endpoint
 app.get("/health", (c) => {
   return c.json({ status: "ok" });
