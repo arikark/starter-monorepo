@@ -5,10 +5,8 @@ import dotenv from "dotenv";
 import { Hono } from "hono";
 import { type Context } from "hono";
 import { cors } from "hono/cors";
-import OpenAI from "openai";
 
-import { ChatService } from "./services/chat/chat";
-import { GmailService } from "./services/gmail/gmail";
+import { ChatService } from "./agents/chat";
 
 dotenv.config();
 
@@ -17,7 +15,9 @@ if (!process.env.CLERK_SECRET_KEY) {
 }
 
 // Initialize Clerk client with secret key
-const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+export const clerk = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY,
+});
 
 // Define our custom context type
 type AppContext = {
@@ -31,30 +31,14 @@ const app = new Hono<AppContext>();
 // Enable CORS
 app.use("/*", cors());
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 // Initialize Redis client
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_URL,
   token: process.env.UPSTASH_REDIS_TOKEN,
 });
 
-const getGmailService = async (userId: string) => {
-  const {
-    data: [OauthAccessToken],
-  } = await clerk.users.getUserOauthAccessToken(userId || "", "google");
-
-  if (!OauthAccessToken?.token) {
-    throw new Error("No access token found");
-  }
-
-  return new GmailService({
-    accessToken: OauthAccessToken.token,
-  });
-};
+// Initialize chat service
+const chatService = new ChatService(redis);
 
 // Auth middleware
 const verifyAuth = async (
@@ -99,8 +83,6 @@ app.post("/api/chat", verifyAuth, async (c) => {
       return c.json({ error: "Invalid request format" }, 400);
     }
 
-    const gmailService = await getGmailService(userId);
-    const chatService = new ChatService(openai, redis, gmailService);
     const response = await chatService.sendMessage(messages, sessionId, userId);
     return c.json(response);
   } catch (error) {
@@ -114,8 +96,6 @@ app.get("/api/chat/:sessionId", verifyAuth, async (c) => {
   try {
     const sessionId = c.req.param("sessionId");
     const userId = c.get("userId");
-    const gmailService = await getGmailService(userId);
-    const chatService = new ChatService(openai, redis, gmailService);
     const history = await chatService.getChatHistory(sessionId, userId);
     return c.json({ history });
   } catch (error) {
@@ -129,46 +109,11 @@ app.delete("/api/chat/:sessionId", verifyAuth, async (c) => {
   try {
     const sessionId = c.req.param("sessionId");
     const userId = c.get("userId");
-    const gmailService = await getGmailService(userId);
-    const chatService = new ChatService(openai, redis, gmailService);
     await chatService.clearChatHistory(sessionId, userId);
     return c.json({ success: true });
   } catch (error) {
     console.error("Error clearing chat history:", error);
     return c.json({ error: "Failed to clear chat history" }, 500);
-  }
-});
-
-// Get Gmail messages endpoint
-app.get("/api/gmail/messages", verifyAuth, async (c) => {
-  try {
-    const userId = c.get("userId");
-    // this returns an array of OauthAccessToken objects I'm just getting the first one
-    const {
-      data: [OauthAccessToken],
-    } = await clerk.users.getUserOauthAccessToken(userId || "", "google");
-
-    console.log(OauthAccessToken);
-
-    if (!OauthAccessToken) {
-      return c.json({ error: "No access token found" }, 401);
-    }
-
-    const gmailService = new GmailService({
-      accessToken: OauthAccessToken?.token,
-    });
-
-    const messages = await gmailService.getGmailMessages({
-      accessToken: OauthAccessToken?.token,
-      query: "from:me",
-    });
-
-    console.log(messages);
-
-    return c.json({ messages });
-  } catch (error) {
-    console.error("Error fetching Gmail messages:", error);
-    return c.json({ error: "Failed to fetch Gmail messages" }, 500);
   }
 });
 

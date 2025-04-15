@@ -7,56 +7,30 @@ export class GmailService {
     this.accessToken = accessToken;
   }
 
-  getAccessToken(): string {
-    return this.accessToken;
-  }
-
-  private async getGoogleClient({
-    accessToken,
-    scopes,
-  }: {
-    accessToken: string;
-    scopes: string[];
-  }) {
+  private async getGoogleClient({ scopes }: { scopes: string[] }) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-
     const googleAuth = new google.auth.OAuth2({
       clientId,
       clientSecret,
     });
     googleAuth.setCredentials({
       scope: scopes.join(" "),
-      access_token: accessToken,
+      access_token: this.accessToken,
     });
-
     return googleAuth;
   }
 
-  private async getGmailClient({ accessToken }: { accessToken: string }) {
-    const googleAuth = await this.getGoogleClient({
-      accessToken,
-      scopes: ["https://www.googleapis.com/auth/gmail.readonly"],
-    });
-    return google.gmail({
-      version: "v1",
-      auth: googleAuth,
-    });
-  }
-
-  async getGmailMessages({
-    accessToken,
-    query,
-  }: {
-    accessToken: string;
-    query?: string;
-  }) {
+  async getGmailMessages({ query }: { query?: string }) {
     try {
       // fetch subject of most recent email
-      const gmailClient = await this.getGmailClient({
-        accessToken,
+      const googleAuth = await this.getGoogleClient({
+        scopes: ["https://www.googleapis.com/auth/gmail.readonly"],
       });
-
+      const gmailClient = google.gmail({
+        version: "v1",
+        auth: googleAuth,
+      });
       const response = await gmailClient.users.messages.list({
         userId: "me",
         q: query,
