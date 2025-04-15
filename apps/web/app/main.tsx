@@ -5,7 +5,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "@workspace/ui/globals.css";
 import { AuthenticatedLayout } from "./layouts/authenticated-layout";
 import { QueryProvider } from "./lib/query-provider";
-import { Chat, loader as chatLoader } from "./routes/chat";
+import { Chat } from "./routes/chat";
 import { action, ErrorBoundary, loader, type Route } from "./routes/home";
 
 const routes = [
@@ -19,7 +19,6 @@ const routes = [
       {
         path: "/chat",
         element: <Chat />,
-        loader: chatLoader,
       },
     ],
   } satisfies Route,

@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
-import { useLoaderData } from "react-router-dom";
 import { useChat } from "@ai-sdk/react";
-import { useAuth, useUser } from "@clerk/react-router";
+import { useUser } from "@clerk/react-router";
 // Import TanStack Query - this will be installed later
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -22,15 +21,7 @@ import { Bot, Send, Trash2, User } from "lucide-react";
 
 import { API_URL, useApi } from "../lib/api";
 
-// Loader function to get session ID
-export function loader() {
-  // Generate a session ID if not already set
-  const sessionId = Date.now().toString();
-  return { sessionId };
-}
-
 export function Chat() {
-  const { sessionId } = useLoaderData<typeof loader>();
   const { getHeaders } = useApi();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useUser();
