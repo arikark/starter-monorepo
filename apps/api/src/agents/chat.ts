@@ -43,7 +43,8 @@ export class ChatService {
       temperature: 0.1,
       tools: {
         searchGmail: tool({
-          description: "Search user's Gmail inbox",
+          description:
+            "Initial search of user's Gmail inbox to extract message snippets. The user is only interested in the snippet of the email.",
           parameters: z.object({
             query: z.string(),
           }),

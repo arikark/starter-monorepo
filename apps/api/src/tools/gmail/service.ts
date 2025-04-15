@@ -22,7 +22,7 @@ export class GmailService {
     return googleAuth;
   }
 
-  async getGmailMessages({ query }: { query?: string }) {
+  async getGmailMessageSnippets({ query }: { query?: string }) {
     try {
       // fetch subject of most recent email
       const googleAuth = await this.getGoogleClient({
@@ -41,30 +41,11 @@ export class GmailService {
       if (!messages || messages.length === 0) {
         return "No messages found";
       }
-
-      const firstMessage = messages[0];
-      if (!firstMessage || !firstMessage.id) {
-        return "Message ID not found";
-      }
-
-      const messageDetails = await gmailClient.users.messages.get({
-        userId: "me",
-        id: firstMessage.id,
-      });
-
-      // Extract subject from headers
-      const headers = messageDetails.data.payload?.headers || [];
-      let subject = "No subject";
-
-      // Find subject header
-      for (const header of headers) {
-        if (header.name === "Subject" && header.value) {
-          subject = header.value;
-          break;
-        }
-      }
-
-      return subject;
+      const messageSnippets = messages?.map(({ id, snippet }) => ({
+        id,
+        snippet,
+      }));
+      return messageSnippets;
     } catch (error) {
       console.error("Error fetching Gmail messages:", error);
       return "Error fetching email subject";

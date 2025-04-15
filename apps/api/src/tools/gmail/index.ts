@@ -37,9 +37,10 @@ const searchGmail = async ({
   const gmailClient = new GmailService({
     accessToken: OauthAccessToken.token,
   });
-  const messages = await gmailClient.getGmailMessages({
+  const messages = await gmailClient.getGmailMessageSnippets({
     query,
   });
+  console.log("messages", messages);
   return messages;
 };
 
