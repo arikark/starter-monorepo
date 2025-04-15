@@ -7,8 +7,8 @@ import { type Context } from "hono";
 import { cors } from "hono/cors";
 import OpenAI from "openai";
 
-import { ChatService } from "./utils/chat";
-import { GmailService } from "./utils/gmail";
+import { ChatService } from "./services/chat/chat";
+import { GmailService } from "./services/gmail/gmail";
 
 dotenv.config();
 

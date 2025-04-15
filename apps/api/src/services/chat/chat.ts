@@ -1,9 +1,8 @@
 import { type Redis } from "@upstash/redis";
 import type OpenAI from "openai";
 
-import { type GmailService } from "./gmail";
+import { type GmailService } from "../gmail/gmail";
 import { tools } from "./tools";
-
 export interface BaseMessage {
   content: string;
   userId: string;
