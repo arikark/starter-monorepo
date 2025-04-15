@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useLoaderData } from "react-router-dom";
 import { useChat } from "@ai-sdk/react";
-import { useUser } from "@clerk/clerk-react";
+import { useAuth, useUser } from "@clerk/react-router";
 // Import TanStack Query - this will be installed later
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -43,7 +43,6 @@ export function Chat() {
     },
     staleTime: 5 * 60 * 1000, // Consider headers stale after 5 minutes
   });
-
   const {
     messages,
     handleInputChange,

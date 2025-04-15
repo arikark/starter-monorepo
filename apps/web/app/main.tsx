@@ -1,10 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { ClerkProvider } from "@clerk/clerk-react";
 
 import "@workspace/ui/globals.css";
-import AuthenticatedLayout from "./layouts/authenticated-layout";
+import { AuthenticatedLayout } from "./layouts/authenticated-layout";
 import { QueryProvider } from "./lib/query-provider";
 import { Chat, loader as chatLoader } from "./routes/chat";
 import { action, ErrorBoundary, loader, type Route } from "./routes/home";
@@ -37,10 +36,8 @@ if (!PUBLISHABLE_KEY) {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
-      <QueryProvider>
-        <RouterProvider router={router} />
-      </QueryProvider>
-    </ClerkProvider>
+    <QueryProvider>
+      <RouterProvider router={router} />
+    </QueryProvider>
   </React.StrictMode>,
 );

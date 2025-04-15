@@ -1,12 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { type Redis } from "@upstash/redis";
-import {
-  appendClientMessage,
-  appendResponseMessages,
-  type Message,
-  streamText,
-  tool,
-} from "ai";
+import { appendClientMessage, type Message, streamText, tool } from "ai";
 import { z } from "zod";
 
 import { searchGmailTool } from "../tools/gmail";
@@ -60,11 +54,14 @@ export class ChatService {
         console.log(`Injecting response to chat history to ${chatKey}`);
         console.log("chatHistory", chatHistory);
         console.log("response", response);
-        const messages = appendResponseMessages({
-          messages: chatHistory,
-          responseMessages: response.messages,
-        });
-        await this.redis.set(chatKey, JSON.stringify([...messages], null, 2));
+        // const messages = appendResponseMessages({
+        //   messages: chatHistory,
+        //   responseMessages: response.messages,
+        // });
+        await this.redis.set(
+          chatKey,
+          JSON.stringify([...chatHistory], null, 2),
+        );
       },
     });
     // consume the stream to ensure it runs to completion & triggers onFinish

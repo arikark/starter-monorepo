@@ -1,5 +1,5 @@
 // API functions for chat operations
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/react-router";
 import { type CoreMessage } from "ai";
 
 // Get the API URL from environment variables

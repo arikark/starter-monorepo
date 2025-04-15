@@ -53,7 +53,11 @@ const verifyAuth = async (
 ) => {
   try {
     // Extract token from Authorization header
-    const { isSignedIn, token } = await clerk.authenticateRequest(c.req.raw);
+    const { isSignedIn, token, ...rest } = await clerk.authenticateRequest(
+      c.req.raw,
+    );
+
+    console.log("rest", rest);
 
     if (!isSignedIn) {
       return c.json({ error: "Unauthorized: Missing token" }, 401);
