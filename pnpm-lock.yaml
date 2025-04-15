@@ -100,6 +100,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@ai-sdk/react':
+        specifier: ^1.2.9
+        version: 1.2.9(react@19.1.0)(zod@3.24.2)
       '@clerk/clerk-react':
         specifier: ^5.27.0
         version: 5.27.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -115,9 +118,15 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.74.2
         version: 5.74.2(react@19.1.0)
+      '@tanstack/react-query-devtools':
+        specifier: ^5.74.3
+        version: 5.74.3(@tanstack/react-query@5.74.2(react@19.1.0))(react@19.1.0)
       '@workspace/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      ai:
+        specifier: ^4.3.6
+        version: 4.3.6(react@19.1.0)(zod@3.24.2)
       isbot:
         specifier: ^4.1.0
         version: 4.4.0
@@ -1517,6 +1526,15 @@ packages:
 
   '@tanstack/query-core@5.74.2':
     resolution: {integrity: sha512-zxiLXIJ0TYsemnkL04qXWRxHSPiJbDfkaCUFbDz5pE2CUQBGoU6Xg3oPWkpQrz0G/7T+kMV7gtvXCrz/pCtoAg==}
+
+  '@tanstack/query-devtools@5.73.3':
+    resolution: {integrity: sha512-hBQyYwsOuO7QOprK75NzfrWs/EQYjgFA0yykmcvsV62q0t6Ua97CU3sYgjHx0ZvxkXSOMkY24VRJ5uv9f5Ik4w==}
+
+  '@tanstack/react-query-devtools@5.74.3':
+    resolution: {integrity: sha512-H7TsOBB1fRCuuawrBzKMoIszqqILr2IN5oGLYMl7QG7ERJpMdc4hH8OwzBhVxJnmKeGwgtTQgcdKepfoJCWvFg==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.74.3
+      react: ^18 || ^19
 
   '@tanstack/react-query@5.74.2':
     resolution: {integrity: sha512-L0Jsa1/73fw1nNrWzlnosYqSGBksjR4ZhKGvC+kp4N/6CyGRF1UsrNWjVH6PRHmeJNxh315OhMUoYlWwyHveNQ==}
@@ -6418,6 +6436,14 @@ snapshots:
       vite: 5.4.18(@types/node@20.17.19)(lightningcss@1.29.2)
 
   '@tanstack/query-core@5.74.2': {}
+
+  '@tanstack/query-devtools@5.73.3': {}
+
+  '@tanstack/react-query-devtools@5.74.3(@tanstack/react-query@5.74.2(react@19.1.0))(react@19.1.0)':
+    dependencies:
+      '@tanstack/query-devtools': 5.73.3
+      '@tanstack/react-query': 5.74.2(react@19.1.0)
+      react: 19.1.0
 
   '@tanstack/react-query@5.74.2(react@19.1.0)':
     dependencies:

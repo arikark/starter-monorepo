@@ -1,6 +1,12 @@
 import { openai } from "@ai-sdk/openai";
 import { type Redis } from "@upstash/redis";
-import { type CoreMessage, generateText, tool } from "ai";
+import {
+  appendClientMessage,
+  type CoreMessage,
+  type Message,
+  streamText,
+  tool,
+} from "ai";
 import { z } from "zod";
 
 import { searchGmailTool } from "../tools/gmail";
@@ -21,34 +27,20 @@ export class ChatService {
     return `chat:${userId}:${sessionId}`;
   }
 
-  async sendMessage(
-    messages: CoreMessage[],
-    sessionId: string,
-    userId: string,
-  ): Promise<CoreMessage[]> {
+  async sendMessage(message: Message, sessionId: string, userId: string) {
     const chatKey = this.getChatKey(userId, sessionId);
 
     // Get existing chat history
-    const chatHistory =
-      (await this.redis.get<EnrichedMessage[]>(chatKey)) || [];
-
-    // Add user ID and timestamp to new messages
-    const messagesWithMetadata = messages.map((msg) => ({
-      ...msg,
-      userId,
-      timestamp: Date.now(),
-    }));
-
-    // Combine existing history with new messages
-    const allMessages: EnrichedMessage[] = [
-      ...chatHistory,
-      ...messagesWithMetadata,
-    ];
+    const chatHistory = (await this.redis.get<Message[]>(chatKey)) || [];
+    const messages = appendClientMessage({
+      messages: chatHistory,
+      message,
+    });
 
     const model = openai("gpt-4o-mini");
-    const { steps, response } = await generateText({
+    const result = streamText({
       model,
-      messages: allMessages,
+      messages,
       temperature: 0.1,
       tools: {
         searchGmail: tool({
@@ -68,15 +60,19 @@ export class ChatService {
         }),
       },
       maxSteps: 10,
+      onFinish: async ({ response }) => {
+        console.log(`Injecting response to chat history to ${chatKey}`);
+        await this.redis.set(
+          chatKey,
+          JSON.stringify([...messages, ...response.messages], null, 2),
+        );
+      },
     });
+    // consume the stream to ensure it runs to completion & triggers onFinish
+    // even when the client response is aborted:
+    result.consumeStream();
 
-    if (response.messages.length > 0) {
-      console.log(steps);
-      console.log(response.messages);
-      await this.redis.set(chatKey, allMessages);
-    }
-
-    return response.messages;
+    return result;
   }
 
   async getChatHistory(
@@ -85,7 +81,6 @@ export class ChatService {
   ): Promise<EnrichedMessage[]> {
     const chatKey = this.getChatKey(userId, sessionId);
     const chatHistory = await this.redis.get<EnrichedMessage[]>(chatKey);
-    // Return an empty array if chat history is not found
     return chatHistory || [];
   }
 

@@ -1,21 +1,16 @@
 // API functions for chat operations
 import { useAuth } from "@clerk/clerk-react";
-
-// Define the chat message type
-export interface ChatMessage {
-  role: "user" | "assistant" | "system";
-  content: string;
-}
+import { type CoreMessage } from "ai";
 
 // Get the API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 // Custom hook for API operations
 export function useApi() {
   const { getToken } = useAuth();
 
   // Helper function to get headers with auth token
-  const getHeaders = async (): Promise<HeadersInit> => {
+  const getHeaders = async (): Promise<Record<string, string>> => {
     const token = await getToken();
 
     if (!token) {
@@ -31,7 +26,7 @@ export function useApi() {
   // Fetch chat history for a session
   const fetchChatHistory = async (
     sessionId: string,
-  ): Promise<ChatMessage[]> => {
+  ): Promise<CoreMessage[]> => {
     try {
       const apiUrl = `${API_URL}/api/chat/${sessionId}`;
       const headers = await getHeaders();
@@ -56,9 +51,9 @@ export function useApi() {
 
   // Send a message to the API
   const sendMessage = async (
-    message: ChatMessage,
+    message: CoreMessage,
     sessionId: string,
-  ): Promise<ChatMessage> => {
+  ): Promise<CoreMessage> => {
     try {
       const apiUrl = `${API_URL}/api/chat`;
       const headers = await getHeaders();
@@ -110,30 +105,10 @@ export function useApi() {
     }
   };
 
-  // Get Gmail messages
-  const getGmailMessages = async (): Promise<string> => {
-    try {
-      const apiUrl = `${API_URL}/api/gmail/messages`;
-      const headers = await getHeaders();
-      const response = await fetch(apiUrl, { headers });
-
-      if (!response.ok) {
-        throw new Error(`API responded with status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.subject || "No subject found";
-    } catch (error) {
-      console.error("Failed to get Gmail messages:", error);
-      throw error;
-    }
-  };
-
   return {
     fetchChatHistory,
     sendMessage,
     clearChatHistory,
     getHeaders,
-    getGmailMessages,
   };
 }

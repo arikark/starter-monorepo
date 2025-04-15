@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { Hono } from "hono";
 import { type Context } from "hono";
 import { cors } from "hono/cors";
+import { stream } from "hono/streaming";
 
 import { ChatService } from "./agents/chat";
 
@@ -76,15 +77,19 @@ const verifyAuth = async (
 // Chat endpoint
 app.post("/api/chat", verifyAuth, async (c) => {
   try {
-    const { messages, sessionId } = await c.req.json();
+    const { message, sessionId } = await c.req.json();
     const userId = c.get("userId");
 
-    if (!messages || !Array.isArray(messages)) {
+    if (!message) {
       return c.json({ error: "Invalid request format" }, 400);
     }
 
-    const response = await chatService.sendMessage(messages, sessionId, userId);
-    return c.json(response);
+    const result = await chatService.sendMessage(message, sessionId, userId);
+    // Mark the response as a v1 data stream:
+    c.header("X-Vercel-AI-Data-Stream", "v1");
+    c.header("Content-Type", "text/plain; charset=utf-8");
+
+    return stream(c, (stream) => stream.pipe(result.toDataStream()));
   } catch (error) {
     console.error("Error processing chat request:", error);
     return c.json({ error: "Failed to process request" }, 500);

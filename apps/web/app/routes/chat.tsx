@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { useLoaderData } from "react-router-dom";
+import { useChat } from "@ai-sdk/react";
+import { useUser } from "@clerk/clerk-react";
 // Import TanStack Query - this will be installed later
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Avatar,
   AvatarFallback,
@@ -16,10 +18,9 @@ import {
 } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
-import { ArrowLeft, Bot, Send, Trash2, User } from "lucide-react";
+import { Bot, Send, Trash2, User } from "lucide-react";
 
-import { GmailForm } from "../components/GmailForm";
-import { type ChatMessage, useApi } from "../lib/api";
+import { API_URL, useApi } from "../lib/api";
 
 // Loader function to get session ID
 export function loader() {
@@ -28,241 +29,138 @@ export function loader() {
   return { sessionId };
 }
 
-export default function Chat() {
+export function Chat() {
   const { sessionId } = useLoaderData<typeof loader>();
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const { getHeaders } = useApi();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const queryClient = useQueryClient();
-  const api = useApi();
+  const { user } = useUser();
 
-  // Auto-scroll to bottom when messages change
+  // Use React Query to fetch headers
+  const { data: headers = {} } = useQuery({
+    queryKey: ["chat-headers"],
+    queryFn: async () => {
+      return await getHeaders();
+    },
+    staleTime: 5 * 60 * 1000, // Consider headers stale after 5 minutes
+  });
+
+  const {
+    messages,
+    handleInputChange,
+    input,
+    handleSubmit,
+    setMessages,
+    reload,
+    status,
+  } = useChat({
+    api: `${API_URL}/api/chat`,
+    headers,
+    experimental_prepareRequestBody: ({ messages, id }) => ({
+      message: messages[messages.length - 1],
+      id,
+    }),
+  });
+
+  const handleClearChat = () => {
+    setMessages([]);
+    reload();
+  };
+
+  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
+  }, [messages]);
 
-  // Fetch chat history using TanStack Query
-  const { data: messages = [], isLoading: isLoadingHistory } = useQuery({
-    queryKey: ["chatHistory", sessionId],
-    queryFn: () => api.fetchChatHistory(sessionId),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: (message: ChatMessage) => api.sendMessage(message, sessionId),
-    onSuccess: (_data: ChatMessage) => {
-      // Invalidate and refetch chat history
-      queryClient.invalidateQueries({ queryKey: ["chatHistory", sessionId] });
-    },
-    onError: (error: unknown) => {
-      console.error("Error sending message:", error);
-      setError(
-        `Error sending message: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    },
-  });
-
-  // Clear chat mutation
-  const clearChatMutation = useMutation({
-    mutationFn: () => api.clearChatHistory(sessionId),
-    onSuccess: () => {
-      // Invalidate and refetch chat history
-      queryClient.invalidateQueries({ queryKey: ["chatHistory", sessionId] });
-    },
-    onError: (error: unknown) => {
-      console.error("Failed to clear chat:", error);
-      setError(
-        `Failed to clear chat: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    },
-  });
-
-  const handleSendMessage = async () => {
-    if (!input.trim()) return;
-
-    const userMessage: ChatMessage = {
-      role: "user",
-      content: input.trim(),
-    };
-
-    // Add user message to the chat immediately
-    setInput("");
-    setIsLoading(true);
-    setError(null);
-
-    // Optimistically update the UI with the user's message
-    queryClient.setQueryData(
-      ["chatHistory", sessionId],
-      (oldData: ChatMessage[] = []) => {
-        return [...oldData, userMessage];
-      },
-    );
-
-    try {
-      // Send message using mutation
-      await sendMessageMutation.mutateAsync(userMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleClearChat = async () => {
-    try {
-      setError(null);
-      await clearChatMutation.mutateAsync();
-    } catch (error) {
-      // Error handling is done in the mutation
-    }
-  };
+  const isLoading = status === "submitted" || status === "streaming";
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
-      <Card className="p-6">
-        <div className="flex flex-col gap-4">
-          <h1 className="text-2xl font-bold">Chat</h1>
-
-          <GmailForm />
-
-          <Card className="flex flex-col h-full">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-2xl font-bold">
-                Chat Interface
-              </CardTitle>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleClearChat}
-                  title="Clear Chat"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => navigate("/")}
-                  title="Back to Home"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-
-            {error && (
-              <div className="mx-4 mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-md">
-                <p className="font-medium">Error:</p>
-                <p className="text-sm">{error}</p>
-              </div>
-            )}
-
-            <CardContent className="flex-1 p-0">
-              <ScrollArea className="h-[calc(100vh-220px)] p-4">
-                <div className="flex flex-col gap-4">
-                  {messages.length === 0 && !isLoading && !isLoadingHistory && (
-                    <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-                      <Bot className="h-12 w-12 mb-4 opacity-50" />
-                      <p className="text-lg font-medium">No messages yet</p>
-                      <p className="text-sm">
-                        Start a conversation by typing a message below
-                      </p>
-                    </div>
-                  )}
-
-                  {messages.map((message: ChatMessage, index: number) => (
+    <div className="flex flex-col h-screen max-h-screen">
+      <Card className="flex-1 flex flex-col overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-xl font-bold">Chat</CardTitle>
+          <Button variant="outline" size="sm" onClick={handleClearChat}>
+            <Trash2 className="h-4 w-4 mr-2" />
+            Clear chat
+          </Button>
+        </CardHeader>
+        <CardContent className="flex-1 flex flex-col p-0">
+          <ScrollArea className="flex-1 p-4">
+            <div className="flex flex-col gap-4">
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                  <Bot className="h-12 w-12 mb-4" />
+                  <p className="text-lg">Start a conversation</p>
+                  <p className="text-sm">Ask me anything!</p>
+                </div>
+              ) : (
+                messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${
+                      message.role === "user" ? "justify-end" : "justify-start"
+                    }`}
+                  >
                     <div
-                      key={index}
-                      className={`flex items-start gap-3 ${
+                      className={`flex max-w-[80%] ${
                         message.role === "user"
-                          ? "justify-end"
-                          : "justify-start"
-                      }`}
+                          ? "flex-row-reverse"
+                          : "flex-row"
+                      } items-start gap-2`}
                     >
-                      {message.role === "assistant" && (
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src="/bot-avatar.svg" alt="Assistant" />
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            <Bot className="h-4 w-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-
+                      <Avatar className="h-8 w-8">
+                        {message.role === "user" ? (
+                          <>
+                            <AvatarImage src={user?.imageUrl} />
+                            <AvatarFallback>
+                              <User className="h-4 w-4" />
+                            </AvatarFallback>
+                          </>
+                        ) : (
+                          <>
+                            <AvatarImage />
+                            <AvatarFallback>
+                              <Bot className="h-4 w-4" />
+                            </AvatarFallback>
+                          </>
+                        )}
+                      </Avatar>
                       <div
-                        className={`max-w-[70%] p-3 rounded-lg ${
+                        className={`rounded-lg px-4 py-2 ${
                           message.role === "user"
-                            ? "bg-primary text-primary-foreground ml-auto"
+                            ? "bg-primary text-primary-foreground"
                             : "bg-muted"
                         }`}
                       >
-                        {message.content}
-                      </div>
-
-                      {message.role === "user" && (
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src="/user-avatar.svg" alt="User" />
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            <User className="h-4 w-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-                    </div>
-                  ))}
-
-                  {(isLoading || isLoadingHistory) && (
-                    <div className="flex items-start gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src="/bot-avatar.svg" alt="Assistant" />
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          <Bot className="h-4 w-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="bg-muted p-3 rounded-lg">
-                        <div className="flex gap-1">
-                          <div
-                            className="w-2 h-2 bg-primary/50 rounded-full animate-bounce"
-                            style={{ animationDelay: "0ms" }}
-                          ></div>
-                          <div
-                            className="w-2 h-2 bg-primary/50 rounded-full animate-bounce"
-                            style={{ animationDelay: "150ms" }}
-                          ></div>
-                          <div
-                            className="w-2 h-2 bg-primary/50 rounded-full animate-bounce"
-                            style={{ animationDelay: "300ms" }}
-                          ></div>
-                        </div>
+                        <p className="text-sm">{message.content}</p>
                       </div>
                     </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-          <div className="flex w-full gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
+                  </div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
+          <div className="p-4 border-t">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmit(e);
               }}
-              placeholder="Type your message..."
-              className="flex-1"
-            />
-            <Button
-              onClick={handleSendMessage}
-              disabled={isLoading || !input.trim()}
-              size="icon"
+              className="flex gap-2"
             >
-              <Send className="h-4 w-4" />
-            </Button>
+              <Input
+                value={input}
+                onChange={handleInputChange}
+                placeholder="Type your message..."
+                className="flex-1"
+                disabled={isLoading}
+              />
+              <Button type="submit" disabled={isLoading}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
           </div>
-        </div>
+        </CardContent>
       </Card>
     </div>
   );
