@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { useUser } from "@clerk/react-router";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Avatar,
   AvatarFallback,
@@ -16,10 +17,17 @@ import { Bot, Send, Trash2, User } from "lucide-react";
 import { API_URL, useApi } from "../lib/api";
 
 export function Chat() {
-  const { getHeaders } = useApi();
+  const { getHeaders, getPeople } = useApi();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useUser();
   const [headers, setHeaders] = useState<Record<string, string>>({});
+
+  const { mutate: getPeopleMutation } = useMutation({
+    mutationFn: (query: string) => getPeople(query),
+    onSuccess: (data) => {
+      console.log(data);
+    },
+  });
 
   const {
     messages,
@@ -62,8 +70,16 @@ export function Chat() {
       <Card className="flex-1 flex flex-col overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div className="flex gap-2">
-            <Combobox placeholder="Select person a" options={[]} />
-            <Combobox placeholder="Select person b" options={[]} />
+            <Combobox
+              placeholder="Select person a"
+              options={[]}
+              onSearch={getPeopleMutation}
+            />
+            <Combobox
+              placeholder="Select person b"
+              options={[]}
+              onSearch={getPeopleMutation}
+            />
           </div>
 
           <Button variant="outline" size="sm" onClick={handleClearChat}>

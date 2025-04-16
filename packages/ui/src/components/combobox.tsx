@@ -16,21 +16,37 @@ import {
   PopoverTrigger,
 } from "@workspace/ui/components/popover";
 import { cn } from "@workspace/ui/lib/utils";
+import { debounce } from "lodash-es";
 import { Check, ChevronsUpDown } from "lucide-react";
 
 interface ComboboxProps extends React.ComponentProps<typeof Popover> {
   placeholder: string;
   options: { value: string; label: string }[];
+  onSearch: (value: string) => void;
 }
 
-export function Combobox({ options, placeholder, ...props }: ComboboxProps) {
+export function Combobox({
+  options,
+  placeholder,
+  onSearch,
+  ...props
+}: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState("");
+
+  // Create debounced search function outside of useCallback
+  const debouncedSearch = React.useMemo(
+    () => debounce((value: string) => onSearch(value), 300),
+    [onSearch],
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen} {...props}>
       <PopoverTrigger asChild>
         <Button
+          onFocus={() => {
+            onSearch("");
+          }}
           variant="outline"
           role="combobox"
           aria-expanded={open}
@@ -44,9 +60,12 @@ export function Combobox({ options, placeholder, ...props }: ComboboxProps) {
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>
-          <CommandInput placeholder="Search framework..." />
+          <CommandInput
+            onValueChange={debouncedSearch}
+            placeholder="Search framework..."
+          />
           <CommandList>
-            <CommandEmpty>No framework found.</CommandEmpty>
+            <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem

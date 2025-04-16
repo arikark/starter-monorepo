@@ -1,25 +1,8 @@
 import { tool } from "ai";
 import z from "zod";
 
-import { clerk } from "../..";
+import { clerk } from "../../../utils";
 import { GmailService } from "./service";
-
-// const gmailResponseSchema = z.object({
-//   from: z.string().describe("The sender of the email"),
-//   to: z.string().describe("The recipient of the email"),
-//   date: z.string().describe("The date of the email"),
-//   subject: z.string().describe("The subject of the email"),
-//   body: z.string().describe("The body of the email"),
-//   attachments: z.array(
-//     z.object({
-//       filename: z.string().describe("The filename of the attachment"),
-//       fileId: z.string().describe("The file ID of the attachment"),
-//       fileType: z.string().describe("The type of the attachment"),
-//       partNumber: z.number().describe("The part number of the attachment"),
-//       size: z.number().describe("The size of the attachment"),
-//     }),
-//   ),
-// });
 
 const searchGmail = async ({
   userId,

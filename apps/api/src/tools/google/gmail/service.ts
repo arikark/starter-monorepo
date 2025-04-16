@@ -1,5 +1,7 @@
 import { google } from "googleapis";
 
+import { getGoogleClient } from "../utils";
+
 export class GmailService {
   private accessToken: string;
 
@@ -7,25 +9,11 @@ export class GmailService {
     this.accessToken = accessToken;
   }
 
-  private async getGoogleClient({ scopes }: { scopes: string[] }) {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const googleAuth = new google.auth.OAuth2({
-      clientId,
-      clientSecret,
-    });
-    googleAuth.setCredentials({
-      scope: scopes.join(" "),
-      access_token: this.accessToken,
-    });
-    console.log("googleAuth", await googleAuth.getTokenInfo(this.accessToken));
-    return googleAuth;
-  }
-
   async getGmailMessageSnippets({ query }: { query?: string }) {
     try {
       // fetch subject of most recent email
-      const googleAuth = await this.getGoogleClient({
+      const googleAuth = await getGoogleClient({
+        access_token: this.accessToken,
         scopes: ["https://www.googleapis.com/auth/gmail.readonly"],
       });
       const gmailClient = google.gmail({

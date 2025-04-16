@@ -9,7 +9,7 @@ import {
 } from "ai";
 import { z } from "zod";
 
-import { searchGmailTool } from "../tools/gmail";
+import { searchGmailTool } from "../tools/google/gmail";
 
 export class ChatService {
   private redis: Redis;

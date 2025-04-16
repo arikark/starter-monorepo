@@ -1,7 +1,5 @@
-import { createClerkClient } from "@clerk/backend";
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { serve } from "@hono/node-server";
-import { Redis } from "@upstash/redis";
 import dotenv from "dotenv";
 import { Hono } from "hono";
 import { type Context } from "hono";
@@ -9,22 +7,10 @@ import { cors } from "hono/cors";
 import { stream } from "hono/streaming";
 
 import { ChatService } from "./agents/chat";
+import { PeopleService } from "./tools/google/people/service";
+import { clerk, redis } from "./utils";
 
 dotenv.config();
-
-if (!process.env.CLERK_SECRET_KEY) {
-  throw new Error("CLERK_SECRET_KEY is required");
-}
-
-if (!process.env.CLERK_PUBLISHABLE_KEY) {
-  throw new Error("CLERK_PUBLISHABLE_KEY is required");
-}
-
-// Initialize Clerk client with secret key
-export const clerk = createClerkClient({
-  secretKey: process.env.CLERK_SECRET_KEY,
-  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
-});
 
 // Define our custom context type
 type AppContext = {
@@ -37,12 +23,6 @@ const app = new Hono<AppContext>();
 
 // Enable CORS
 app.use("/*", cors());
-
-// Initialize Redis client
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_URL,
-  token: process.env.UPSTASH_REDIS_TOKEN,
-});
 
 // Initialize chat service
 const chatService = new ChatService(redis);
@@ -91,6 +71,27 @@ app.post("/api/chat", verifyAuth, async (c) => {
     return stream(c, (stream) => stream.pipe(result.toDataStream()));
   } catch (error) {
     console.error("Error processing chat request:", error);
+    return c.json({ error: "Failed to process request" }, 500);
+  }
+});
+
+app.get("/api/people", verifyAuth, async (c) => {
+  try {
+    const auth = getAuth(c);
+    const query = c.req.query("query");
+    const userId = auth?.userId;
+
+    if (!userId) {
+      return c.json({ error: "PeopleService: Missing userId" }, 401);
+    }
+
+    const peopleService = new PeopleService(userId);
+    const result = await peopleService.getPeople({
+      query: query || "",
+    });
+    return c.json(result);
+  } catch (error) {
+    console.error("Error processing people request:", error);
     return c.json({ error: "Failed to process request" }, 500);
   }
 });
