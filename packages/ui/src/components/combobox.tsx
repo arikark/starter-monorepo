@@ -60,7 +60,7 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
-        <Command shouldFilter={false}>
+        <Command>
           <CommandInput
             onValueChange={debounceTime ? debouncedSearch : onSearch}
             placeholder="Search framework..."
