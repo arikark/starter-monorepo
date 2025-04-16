@@ -17,18 +17,22 @@ import {
 } from "@workspace/ui/components/popover";
 import { cn } from "@workspace/ui/lib/utils";
 import { debounce } from "lodash-es";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 
 interface ComboboxProps extends React.ComponentProps<typeof Popover> {
   placeholder: string;
   options: { value: string; label: string | React.ReactNode }[];
   onSearch: (value: string) => void;
+  debounceTime?: number;
+  isLoading?: boolean;
 }
 
 export function Combobox({
   options,
   placeholder,
   onSearch,
+  isLoading,
+  debounceTime = 300,
   ...props
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
@@ -36,8 +40,8 @@ export function Combobox({
 
   // Create debounced search function outside of useCallback
   const debouncedSearch = React.useMemo(
-    () => debounce((value: string) => onSearch(value), 300),
-    [onSearch],
+    () => debounce((value: string) => onSearch(value), debounceTime),
+    [onSearch, debounceTime],
   );
 
   return (
@@ -56,17 +60,19 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
-        <Command
-          onValueChange={(value) => {
-            console.log("new value", value);
-          }}
-        >
+        <Command shouldFilter={false}>
           <CommandInput
-            onValueChange={debouncedSearch}
+            onValueChange={debounceTime ? debouncedSearch : onSearch}
             placeholder="Search framework..."
           />
           <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
+            {isLoading ? (
+              <CommandEmpty className="flex justify-center items-center py-3">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </CommandEmpty>
+            ) : (
+              <CommandEmpty>No results found.</CommandEmpty>
+            )}
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
