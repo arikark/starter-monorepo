@@ -21,7 +21,7 @@ import { Check, ChevronsUpDown } from "lucide-react";
 
 interface ComboboxProps extends React.ComponentProps<typeof Popover> {
   placeholder: string;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string | React.ReactNode }[];
   onSearch: (value: string) => void;
 }
 
@@ -44,9 +44,6 @@ export function Combobox({
     <Popover open={open} onOpenChange={setOpen} {...props}>
       <PopoverTrigger asChild>
         <Button
-          onFocus={() => {
-            onSearch("");
-          }}
           variant="outline"
           role="combobox"
           aria-expanded={open}
@@ -59,7 +56,11 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
-        <Command>
+        <Command
+          onValueChange={(value) => {
+            console.log("new value", value);
+          }}
+        >
           <CommandInput
             onValueChange={debouncedSearch}
             placeholder="Search framework..."

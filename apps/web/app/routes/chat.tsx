@@ -12,6 +12,11 @@ import { Card, CardContent, CardHeader } from "@workspace/ui/components/card";
 import { Combobox } from "@workspace/ui/components/combobox";
 import { Input } from "@workspace/ui/components/input";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip";
 import { Bot, Send, Trash2, User } from "lucide-react";
 
 import { API_URL, useApi } from "../lib/api";
@@ -21,13 +26,61 @@ export function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useUser();
   const [headers, setHeaders] = useState<Record<string, string>>({});
+  const [contactsQueryOne, setContactsQueryOne] = useState("");
+  const [contactsQueryTwo, setContactsQueryTwo] = useState("");
 
-  const { mutate: getPeopleMutation } = useMutation({
-    mutationFn: (query: string) => getPeople(query),
-    onSuccess: (data) => {
-      console.log(data);
+  const { data: contactsDataOne } = useQuery({
+    queryKey: ["people", contactsQueryOne],
+    queryFn: () => getPeople(contactsQueryOne),
+    select: (data) => {
+      const emailIcon = "📧";
+      const phoneIcon = "📞";
+
+      return data.contacts?.map(({ name, email, phone }) => {
+        let label = `${name}`;
+        if (!email && !phone) {
+          return null;
+        }
+        if (email && phone) {
+          label += ` ${emailIcon} ${phoneIcon}`;
+        } else if (email) {
+          label += ` ${emailIcon}`;
+        } else if (phone) {
+          label += ` ${phoneIcon}`;
+        }
+        const labelComponent = (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>{label}</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{name}</p>
+              <p>{email}</p>
+              <p>{phone}</p>
+            </TooltipContent>
+          </Tooltip>
+        );
+        return {
+          value: JSON.stringify({ name, email, phone }),
+          label: labelComponent,
+        };
+      });
     },
   });
+
+  const { data: contactsDataTwo } = useQuery({
+    queryKey: ["people", contactsQueryTwo],
+    queryFn: () => getPeople(contactsQueryTwo),
+    select: (data) => {
+      return data.contacts?.map(({ name, email, phone }) => ({
+        value: JSON.stringify({ name, email, phone }),
+        label: `${name} (${email ?? phone})`,
+      }));
+    },
+  });
+
+  console.log("contactsDataOne", contactsDataOne);
+  console.log("contactsDataTwo", contactsDataTwo);
 
   const {
     messages,
@@ -72,13 +125,13 @@ export function Chat() {
           <div className="flex gap-2">
             <Combobox
               placeholder="Select person a"
-              options={[]}
-              onSearch={getPeopleMutation}
+              options={contactsDataOne ?? []}
+              onSearch={setContactsQueryOne}
             />
             <Combobox
               placeholder="Select person b"
-              options={[]}
-              onSearch={getPeopleMutation}
+              options={contactsDataTwo ?? []}
+              onSearch={setContactsQueryTwo}
             />
           </div>
 

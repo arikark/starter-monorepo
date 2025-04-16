@@ -25,6 +25,18 @@ export class PeopleService {
         auth: googleAuth,
       });
 
+      // warm up the cache with empty query
+      await peopleClient.people.searchContacts({
+        readMask: "phoneNumbers,emailAddresses,names,metadata",
+        pageSize: 20,
+        query: "",
+      });
+      await peopleClient.otherContacts.search({
+        readMask: "phoneNumbers,emailAddresses,names,metadata",
+        pageSize: 20,
+        query: "",
+      });
+
       // Run contact searches in parallel
       const [contacts, otherContacts] = await Promise.all([
         peopleClient.people.searchContacts({
@@ -41,20 +53,30 @@ export class PeopleService {
 
       const formattedContacts =
         (contacts.data.results &&
-          contacts.data.results.map((contact) => ({
-            name: contact.person?.names?.[0]?.displayName,
-            email: contact.person?.emailAddresses?.[0]?.value,
-            phone: contact.person?.phoneNumbers?.[0]?.value,
-          }))) ||
+          contacts.data.results.map((contact) => {
+            if (!contact.person?.names?.[0]?.displayName) {
+              return null;
+            }
+            return {
+              name: contact.person?.names?.[0]?.displayName,
+              email: contact.person?.emailAddresses?.[0]?.value,
+              phone: contact.person?.phoneNumbers?.[0]?.value,
+            };
+          })) ||
         [];
 
       const formattedOtherContacts =
         (otherContacts.data.results &&
-          otherContacts.data.results.map((contact) => ({
-            name: contact.person?.names?.[0]?.displayName,
-            email: contact.person?.emailAddresses?.[0]?.value,
-            phone: contact.person?.phoneNumbers?.[0]?.value,
-          }))) ||
+          otherContacts.data.results.map((contact) => {
+            if (!contact.person?.names?.[0]?.displayName) {
+              return null;
+            }
+            return {
+              name: contact.person?.names?.[0]?.displayName,
+              email: contact.person?.emailAddresses?.[0]?.value,
+              phone: contact.person?.phoneNumbers?.[0]?.value,
+            };
+          })) ||
         [];
 
       const combinedContacts = [
