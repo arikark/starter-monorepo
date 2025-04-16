@@ -1,20 +1,14 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { useUser } from "@clerk/react-router";
-// Import TanStack Query - this will be installed later
-import { useQuery } from "@tanstack/react-query";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@workspace/ui/components/avatar";
 import { Button } from "@workspace/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card";
+import { Card, CardContent, CardHeader } from "@workspace/ui/components/card";
+import { Combobox } from "@workspace/ui/components/combobox";
 import { Input } from "@workspace/ui/components/input";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { Bot, Send, Trash2, User } from "lucide-react";
@@ -25,15 +19,8 @@ export function Chat() {
   const { getHeaders } = useApi();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useUser();
+  const [headers, setHeaders] = useState<Record<string, string>>({});
 
-  // Use React Query to fetch headers
-  const { data: headers = {} } = useQuery({
-    queryKey: ["chat-headers"],
-    queryFn: async () => {
-      return await getHeaders();
-    },
-    staleTime: 5 * 60 * 1000, // Consider headers stale after 5 minutes
-  });
   const {
     messages,
     handleInputChange,
@@ -51,6 +38,13 @@ export function Chat() {
     }),
   });
 
+  const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const headers = await getHeaders();
+    setHeaders(headers);
+    handleSubmit(e);
+  };
+
   const handleClearChat = () => {
     setMessages([]);
     reload();
@@ -64,10 +58,14 @@ export function Chat() {
   const isLoading = status === "submitted" || status === "streaming";
 
   return (
-    <div className="flex flex-col h-screen max-h-screen">
+    <div className="flex flex-col h-full max-h-screen p-4 mt-auto">
       <Card className="flex-1 flex flex-col overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-xl font-bold">Chat</CardTitle>
+          <div className="flex gap-2">
+            <Combobox placeholder="Select person a" options={[]} />
+            <Combobox placeholder="Select person b" options={[]} />
+          </div>
+
           <Button variant="outline" size="sm" onClick={handleClearChat}>
             <Trash2 className="h-4 w-4 mr-2" />
             Clear chat
@@ -131,13 +129,7 @@ export function Chat() {
             </div>
           </ScrollArea>
           <div className="p-4 border-t">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSubmit(e);
-              }}
-              className="flex gap-2"
-            >
+            <form onSubmit={handleSendMessage} className="flex gap-2">
               <Input
                 value={input}
                 onChange={handleInputChange}
